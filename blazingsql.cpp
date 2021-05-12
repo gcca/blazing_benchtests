@@ -53,3 +53,15 @@ void BlazingSQLFileSystem::Move(const std::string & base,
 	Uri toUri{"/" + to};
 	fs->move(fromUri, toUri);
 }
+
+std::shared_ptr<arrow::Buffer> BlazingSQLS3::ReadFile(
+	const std::string &, const std::size_t) {
+	return nullptr;
+}
+
+void BlazingSQLS3::CreateDirectory(const std::string &, const std::string &) {}
+
+void BlazingSQLS3::DeleteDirectory(const std::string &, const std::string &) {}
+
+void BlazingSQLS3::Move(
+	const std::string &, const std::string &, const std::string &) {}

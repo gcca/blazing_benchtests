@@ -36,17 +36,19 @@ endmacro ()
 add_namedlib_with (Benchmark::Benchmark benchmark ${BM_INCLUDE} ${BM_LIB} Threads::Threads)
 add_namedlib_with (Benchmark::Main Benchmark::Benchmark ${BM_INCLUDE} ${BM_MAIN} Benchmark::Benchmark)
 
-add_library (Conda::Env INTERFACE IMPORTED)
-target_include_directories (Conda::Env INTERFACE ${CONDA_PREFIX}/include)
+macro (add_intlib name include)
+  add_library (${name} INTERFACE IMPORTED)
+  target_include_directories (${name} INTERFACE ${include})
+endmacro ()
+
+add_intlib (Conda::Env  ${CONDA_PREFIX}/include)
 target_link_directories (Conda::Env INTERFACE ${CONDA_PREFIX}/lib)
 
-add_library (Blazing::Io INTERFACE IMPORTED)
-target_include_directories (Blazing::Io INTERFACE ${BLAZING_IO_INCLUDE})
+add_intlib (Blazing::Io ${BLAZING_IO_INCLUDE})
 target_link_libraries (Blazing::Io INTERFACE ${BLAZING_IO_LIB})
 
 add_library (blazrow OBJECT blazingsql arrow)
-target_link_directories (blazrow PUBLIC $ENV{HOME}/.miniconda3/envs/snow/lib)
-target_link_libraries (blazrow Benchmark::Main arrow Conda::Env Blazing::Io stdc++fs pfm)
+target_link_libraries (blazrow Benchmark::Main arrow Conda::Env Blazing::Io stdc++fs)
 
 macro (benchmark_executables)
   foreach (arg ${ARGN})
@@ -59,4 +61,5 @@ benchmark_executables (
   readfile_test
   createdirectory_test
   deletedirectory_test
-  movedirectory_test)
+  movedirectory_test
+  s3_createdirectory_test)

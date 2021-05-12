@@ -1,7 +1,5 @@
 #include "btest.hpp"
 
-static const std::string tmpbenchdir{"/tmp/bench_arrow"};
-
 template <class FS>
 static void CreateDirectory(benchmark::State & state) {
 	std::filesystem::remove_all(tmpbenchdir);
