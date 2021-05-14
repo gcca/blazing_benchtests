@@ -47,8 +47,8 @@ target_link_directories (Conda::Env INTERFACE ${CONDA_PREFIX}/lib)
 add_intlib (Blazing::Io ${BLAZING_IO_INCLUDE})
 target_link_libraries (Blazing::Io INTERFACE ${BLAZING_IO_LIB})
 
-add_library (blazrow OBJECT blazingsql arrow)
-target_link_libraries (blazrow Benchmark::Main arrow Conda::Env Blazing::Io stdc++fs)
+add_library (blazrow OBJECT blazingsql arrow aws_util)
+target_link_libraries (blazrow Benchmark::Main arrow aws-cpp-sdk-core aws-cpp-sdk-s3 Conda::Env Blazing::Io stdc++fs)
 
 macro (benchmark_executables)
   foreach (arg ${ARGN})
@@ -62,4 +62,7 @@ benchmark_executables (
   createdirectory_test
   deletedirectory_test
   movedirectory_test
-  s3_createdirectory_test)
+  s3_createdirectory_test
+  s3_movedirectory_test
+  s3_deletedirectory_test
+  s3_readfile_test)

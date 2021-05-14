@@ -1,8 +1,10 @@
 #include "blazingsql.hpp"
 
 #include <arrow/result.h>
+#include <aws/core/Aws.h>
 
 #include <FileSystem/LocalFileSystem.h>
+#include <FileSystem/S3FileSystem.h>
 
 static const std::string localname = "/proc/self/fd";
 
@@ -54,14 +56,106 @@ void BlazingSQLFileSystem::Move(const std::string & base,
 	fs->move(fromUri, toUri);
 }
 
-std::shared_ptr<arrow::Buffer> BlazingSQLS3::ReadFile(
-	const std::string &, const std::size_t) {
-	return nullptr;
+
+BlazingSQLS3::BlazingSQLS3() {
+	Aws::SDKOptions awsOptions;
+	Aws::InitAPI(awsOptions);
 }
 
-void BlazingSQLS3::CreateDirectory(const std::string &, const std::string &) {}
+std::shared_ptr<arrow::Buffer> BlazingSQLS3::ReadFile(
+	const std::string & base, const std::size_t datasize) {
+	std::string::size_type index = base.find('/');
+	const std::string bucketname = base.substr(0, index);
+	const std::string name = base.substr(index + 1);
 
-void BlazingSQLS3::DeleteDirectory(const std::string &, const std::string &) {}
+	FileSystemConnection fileSystemConnection(bucketname,
+		S3FileSystemConnection::EncryptionType::NONE,
+		"",
+		"randomstring",
+		"randomstring",
+		"",
+		"http://127.0.0.1:9000");
 
-void BlazingSQLS3::Move(
-	const std::string &, const std::string &, const std::string &) {}
+	Path localpath(base);
+	std::unique_ptr<FileSystemInterface> fs =
+		std::make_unique<S3FileSystem>(fileSystemConnection);
+
+	Uri baseUri{"/" + name};
+	std::shared_ptr<arrow::io::InputStream> inputStream =
+		fs->openReadable(baseUri);
+
+	std::shared_ptr<arrow::Buffer> buffer = *inputStream->Read(datasize);
+
+	return buffer;
+}
+
+void BlazingSQLS3::CreateDirectory(
+	const std::string & base, const std::string & name) {
+	std::string::size_type index = base.find('/');
+
+	const std::string bucketname = base.substr(0, index);
+	const std::string subdirs = base.substr(index);
+
+	FileSystemConnection fileSystemConnection(bucketname,
+		S3FileSystemConnection::EncryptionType::NONE,
+		"",
+		"randomstring",
+		"randomstring",
+		"",
+		"http://127.0.0.1:9000");
+
+	Path localpath(base);
+	std::unique_ptr<FileSystemInterface> fs =
+		std::make_unique<S3FileSystem>(fileSystemConnection);
+
+	Uri uriDir{subdirs + "/" + name + "/"};
+	fs->makeDirectory(uriDir);
+}
+
+void BlazingSQLS3::DeleteDirectory(
+	const std::string & base, const std::string & name) {
+	std::string::size_type index = base.find('/');
+
+	const std::string bucketname = base.substr(0, index);
+	const std::string subdirs = base.substr(index);
+
+	FileSystemConnection fileSystemConnection(bucketname,
+		S3FileSystemConnection::EncryptionType::NONE,
+		"",
+		"randomstring",
+		"randomstring",
+		"",
+		"http://127.0.0.1:9000");
+
+	Path localpath(base);
+	std::unique_ptr<FileSystemInterface> fs =
+		std::make_unique<S3FileSystem>(fileSystemConnection);
+
+	Uri uriDir{subdirs + "/" + name + "/"};
+	fs->remove(uriDir);
+}
+
+void BlazingSQLS3::Move(const std::string & base,
+	const std::string & src,
+	const std::string & dest) {
+	std::string::size_type index = base.find('/');
+
+	const std::string bucketname = base.substr(0, index);
+	const std::string subdir = base.substr(index);
+
+	FileSystemConnection fileSystemConnection(bucketname,
+		S3FileSystemConnection::EncryptionType::NONE,
+		"",
+		"randomstring",
+		"randomstring",
+		"",
+		"http://127.0.0.1:9000");
+
+	Path localpath(base);
+	std::unique_ptr<FileSystemInterface> fs =
+		std::make_unique<S3FileSystem>(fileSystemConnection);
+
+	Uri srcUri{subdir + "/" + src};
+	Uri dstUri{subdir + "/" + dest + "/"};
+	fs->move(srcUri, dstUri);
+}
